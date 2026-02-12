@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { App } = require('@slack/bolt');
-const db = require('./db');
+const axios = require('axios');
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
@@ -20,37 +20,46 @@ app.event('app_mention', async ({ event, say }) => {
 
 app.command('/add-task', async ({ command, ack, respond }) => {
   await ack();
+
   const task = command.text;
 
   if (!task) {
-    return respond('Please provide a task name');
+    return respond(' Please provide a task name');
   }
-  db.run(
-    'INSERT INTO tasks (title) VALUES (?)',
-    [task],
-    (err) => {
-      if (err) {
-        respond('Failed to add task');
-      } else {
-        respond(`Task added: *${task}*`);
-      }
-    }
-  );
+
+  try {
+    const res = await axios.post(
+      'http://localhost:5000/add-task',
+      { task }
+    );
+
+    respond(` ${res.data.message}\n Task: *${res.data.task.title}*`);
+  } catch (err) {
+    respond(' Failed to add task');
+  }
 });
+
 
 app.command('/get-all-tasks', async ({ ack, respond }) => {
   await ack();
-  db.all('SELECT * FROM tasks ORDER BY id DESC', [], (err, rows) => {
-    if (err) {
-      respond('Failed to fetch tasks');
-    } else if (rows.length === 0) {
-      respond('No tasks found');
-    } else {
-      const list = rows
-        .map((t, i) => `${i + 1}. ${t.title}`)
-        .join('\n');
 
-      respond(`*Todo List:*\n${list}`);
+  try {
+    const res = await axios.get(
+      'http://localhost:5000/get-all-tasks'
+    );
+
+    const tasks = res.data;
+
+    if (tasks.length === 0) {
+      return respond(' No tasks found');
     }
-  });
+
+    const list = tasks
+      .map((t, i) => `${i + 1}. ${t.title}`)
+      .join('\n');
+
+    respond(` *Todo List*\n${list}`);
+  } catch (err) {
+    respond(' Failed to fetch tasks');
+  }
 });
