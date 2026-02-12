@@ -1,14 +1,12 @@
 require("dotenv").config();
-
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ Schema + Model
+//  Schema + Model
 const TaskSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -22,7 +20,7 @@ const TaskSchema = new mongoose.Schema({
 
 const Task = mongoose.model("Task", TaskSchema);
 
-// ✅ API 1: Add Task
+// API 1: Add Task
 app.post("/add-task", async (req, res) => {
   try {
     const { task } = req.body;
@@ -44,7 +42,7 @@ app.post("/add-task", async (req, res) => {
   }
 });
 
-// ✅ API 2: Get All Tasks
+//  Get All Tasks
 app.get("/get-all-tasks", async (req, res) => {
   try {
     const tasks = await Task.find().sort({ createdAt: -1 });
@@ -79,17 +77,18 @@ app.delete("/delete-task/:id", async (req, res) => {
 });
 
 
-// ✅ MongoDB CONNECT — SERVER START ONLY AFTER THIS
+//  MongoDB CONNECT 
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    console.log("✅ MongoDB connected");
+    console.log(" MongoDB connected");
 
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`Server running on port ${PORT}`);
     });
   })
   .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
+    console.error(" MongoDB connection error:", err);
   });
+
